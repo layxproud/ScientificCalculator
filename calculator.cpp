@@ -1,6 +1,7 @@
 #include "calculator.h"
 #include <QDebug>
 #include <QPushButton>
+#include <QtMath>
 
 Calculator::Calculator(QLabel *resultLabel, QLabel *prevLabel, QObject *parent)
     : QObject{parent}
@@ -8,6 +9,7 @@ Calculator::Calculator(QLabel *resultLabel, QLabel *prevLabel, QObject *parent)
     , previousInput{prevLabel}
     , hasDot{false}
     , waitingNumber{true}
+    , isUnary{false}
     , currentOperator{""}
     , firstNumber{0}
     , secondNumber{0}
@@ -36,6 +38,11 @@ void Calculator::saveNumber(double &number)
 
 void Calculator::showResult(bool onEqualsButton)
 {
+    if (isUnary)
+    {
+        calculateResult(currentOperator);
+        return;
+    }
     if (onEqualsButton)
     {
         calculateResult(currentOperator);
@@ -75,6 +82,29 @@ void Calculator::calculateResult(const QString &op)
     {
         resultNumber = firstNumber / secondNumber;
     }
+    else if (op == "sqrt(x)")
+    {
+        resultNumber = qSqrt(firstNumber);
+        previousInput->setText("√(" + QString::number(firstNumber) + ")");
+        currentInput->setText(QString::number(resultNumber));
+    }
+    else if (op == "x^2")
+    {
+        resultNumber = qPow(firstNumber, 2);
+        previousInput->setText("sqr(" + QString::number(firstNumber) + ")");
+        currentInput->setText(QString::number(resultNumber));
+    }
+    else if (op == "1/x")
+    {
+        resultNumber = 1 / firstNumber;
+        previousInput->setText("1/(" + QString::number(firstNumber) + ")");
+        currentInput->setText(QString::number(resultNumber));
+    }
+    else if (op == "+/-")
+    {
+        resultNumber = firstNumber * -1;
+        currentInput->setText(QString::number(resultNumber));
+    }
     else
     {
         return;
@@ -96,6 +126,7 @@ void Calculator::onNumericButtonClicked()
 
 void Calculator::onBinaryOperatorClicked()
 {
+    isUnary = false;
     QPushButton *btn = qobject_cast<QPushButton*>(QObject::sender());
     prevOperator = currentOperator;
     currentOperator = btn->text();
@@ -114,7 +145,14 @@ void Calculator::onBinaryOperatorClicked()
 
 void Calculator::onUnaryOperatorClicked()
 {
+    isUnary = true;
 
+    QPushButton *btn = qobject_cast<QPushButton*>(QObject::sender());
+    prevOperator = currentOperator;
+    currentOperator = btn->text();
+
+    saveNumber(firstNumber);
+    showResult(false);
 }
 
 void Calculator::onEqualsButtonClicked()

@@ -15,6 +15,7 @@ private:
     QLabel *previousInput;
     bool hasDot;
     bool waitingNumber;
+    bool isUnary;
     QString prevOperator;
     QString currentOperator;
     double firstNumber;
